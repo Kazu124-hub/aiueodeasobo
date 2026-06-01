@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>あいうえお で あそぼう！</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --main-color: #ff9800;
+        --bg-color: #fffde7;
+        --text-color: #333;
+        --btn-color: #4caf50;
+    }
+    body {
+        font-family: 'BIZ UDGothic', 'UD デジタル 教科書体 N-R', sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        user-select: none;
+    }
+    header {
+        background-color: var(--main-color);
+        color: white;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    h1 { margin: 0; font-size: 24px; }
+    .controls button {
+        font-size: 14px; padding: 6px 12px; margin-left: 5px; border: none; border-radius: 20px;
+        cursor: pointer; background-color: white; color: var(--main-color); font-weight: bold;
+    }
+    .tabs { margin: 10px 0; }
+    .tabs button {
+        font-size: 16px; padding: 8px 20px; margin: 0 8px; border-radius: 25px; border: none;
+        cursor: pointer; background-color: #e0e0e0; font-weight: bold;
+    }
+    .tabs button.active { background-color: var(--btn-color); color: white; }
+    
+    .container { max-width: 900px; margin: 0 auto; padding: 10px; }
+    .hidden { display: none !important; }
+    
+    /* 表のナビゲーション（少し小さくしてスペース確保） */
+    .table-nav { 
+        display: flex; flex-direction: column; gap: 8px; align-items: center; margin-bottom: 20px;
+    }
+    .nav-row { 
+        display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; 
+    }
+    .table-nav button {
+        font-size: 14px; padding: 8px 12px; border-radius: 10px; border: 2px solid #64b5f6; 
+        background: #e3f2fd; color: #1565c0; cursor: pointer; font-weight: bold;
+        box-shadow: 0 3px 0 #90caf9; transition: 0.1s;
+    }
+    .table-nav button:active { transform: translateY(3px); box-shadow: none; }
+    .table-nav button.active { background: #1976d2; color: white; border-color: #1976d2; box-shadow: 0 3px 0 #0d47a1; }
+    
+    /* 表のスタイル */
+    .vertical-table {
+        display: flex; flex-direction: row-reverse; justify-content: center; gap: 6px; margin: 0 auto;
+    }
+    .col { display: flex; flex-direction: column; gap: 6px; }
+    .cell {
+        background: white; border: 2px solid #ddd; border-radius: 12px;
+        font-size: 45px; width: 65px; height: 65px; /* 文字と枠を少し大きく */
+        display: flex; justify-content: center; align-items: center;
+        cursor: pointer; box-shadow: 0 3px 0 #ccc; transition: 0.1s; color: #333;
+    }
+    
+    /* 拗音（ゃゅょ）専用のワイドセル */
+    .cell.yoon-cell {
+        width: 90px; height: 70px;
+        font-size: 40px; /* 2文字が綺麗に収まるサイズ */
+    }
+
+    .cell:active { transform: translateY(3px); box-shadow: none; }
+    .cell.dim { color: #ccc; background: #f9f9f9; box-shadow: 0 3px 0 #eee; border-color: #eee;}
+    .cell.highlight { color: #e91e63; font-weight: bold; border-color: #e91e63; box-shadow: 0 3px 0 #c2185b;}
+    .cell.empty { background: transparent; border: none; box-shadow: none; cursor: default; }
+    
+    /* クイズのスタイル */
+    .quiz-mode-nav { margin-bottom: 15px; }
+    .quiz-mode-nav button {
+        font-size: 16px; padding: 8px 16px; margin: 0 5px; border-radius: 12px; border: 3px solid #9c27b0;
+        background: white; color: #9c27b0; font-weight: bold; cursor: pointer;
+    }
+    .quiz-mode-nav button.active { background: #9c27b0; color: white; }
+
+    .quiz-nav { margin-bottom: 10px; }
+    .quiz-nav button {
+        font-size: 14px; padding: 6px 10px; margin: 3px; border-radius: 8px; border: 2px solid #2196f3;
+        background: white; cursor: pointer; color: #2196f3; font-weight: bold;
+    }
+    .quiz-nav button.active { background: #2196f3; color: white; }
+    
+    .quiz-box { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative;}
+    .emoji-display { font-size: 120px; margin: 5px 0; }
+    .question-text { font-size: 30px; margin-bottom: 25px; white-space: pre-wrap; line-height: 1.5; cursor: pointer; font-weight: bold; }
+    .options { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+    .option-btn {
+        font-size: 36px; padding: 15px 40px; border-radius: 15px; border: none;
+        background-color: var(--main-color); color: white; cursor: pointer; box-shadow: 0 6px 0 #e65100; font-weight: bold;
+    }
+    .option-btn:active { transform: translateY(6px); box-shadow: none; }
+    
+    /* アニメーション */
+    #hanamaru, #batsu {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+        font-size: 200px; opacity: 0; pointer-events: none; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #hanamaru { color: red; }
+    #batsu { color: blue; }
+    #hanamaru.show, #batsu.show { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>あいうえお で あそぼう！</h1>
+    <div class="controls">
+        <button id="kana-toggle" onclick="toggleKana()">カタカナにする</button>
+        <button id="sound-toggle" onclick="toggleSound()">音：オン 🔊</button>
+    </div>
+</header>
+
+<div class="tabs">
+    <button id="tab-table" class="active" onclick="switchTab('table')">ひょう（みる）</button>
+    <button id="tab-quiz" onclick="switchTab('quiz')">クイズ（あそぶ）</button>
+</div>
+
+<div id="area-table" class="container">
+    <div class="table-nav">
+        <div class="nav-row">
+            <button class="active" onclick="renderTable('gojuon', this)">５０おん</button>
+            <button onclick="renderTable('dakuon', this)">だくおん（ 〝 ）</button>
+            <button onclick="renderTable('handakuon', this)">はんだくおん（ ゜）</button>
+        </div>
+        <div class="nav-row">
+            <button onclick="renderTable('sokuon', this)">そくおん（ っ ）</button>
+            <button onclick="renderTable('yoon', this)">ようおん（ゃゅょなど）</button>
+            <button onclick="renderTable('yoonDakuon', this)">ようおん（〝 ・ ゜）</button>
+        </div>
+    </div>
+    <div id="table-container" class="vertical-table"></div>
+</div>
+
+<div id="area-quiz" class="container hidden">
+    <div class="quiz-mode-nav">
+        <button id="mode-nitaku" class="active" onclick="switchQuizMode('nitaku')">２たくクイズ（え あり）</button>
+        <button id="mode-anaaki" onclick="switchQuizMode('anaaki')">あなあきクイズ（え なし）</button>
+    </div>
+    <div class="quiz-nav">
+        <button class="active" onclick="startQuiz('dakuon', this)">だくおん</button>
+        <button onclick="startQuiz('handakuon', this)">はんだくおん</button>
+        <button onclick="startQuiz('sokuon', this)">そくおん（っ）</button>
+        <button onclick="startQuiz('choon', this)">ちょうおん</button>
+        <button onclick="startQuiz('yoon', this)">ようおん</button>
+    </div>
+    <div class="quiz-box">
+        <div id="emoji-display" class="emoji-display"></div>
+        <div id="question-text" class="question-text" onclick="speakText(this.innerText)"></div>
+        <div id="options-container" class="options"></div>
+        <div id="hanamaru">💮</div>
+        <div id="batsu">✖</div>
+    </div>
+</div>
+
+<script>
+// --- データ定義 ---
+const data = {
+    gojuon: [
+        ['あ','い','う','え','お'], ['か','き','く','け','こ'], ['さ','し','す','せ','そ'],
+        ['た','ち','つ','て','と'], ['な','に','ぬ','ね','の'], ['は','ひ','ふ','へ','ほ'],
+        ['ま','み','む','め','も'], ['や','','ゆ','','よ'], ['ら','り','る','れ','ろ'], ['わ','','を','','ん']
+    ],
+    dakuonMap: {
+        'か':'が', 'き':'ぎ', 'く':'ぐ', 'け':'げ', 'こ':'ご', 'さ':'ざ', 'し':'じ', 'す':'ず', 'せ':'ぜ', 'そ':'ぞ',
+        'た':'だ', 'ち':'ぢ', 'つ':'づ', 'て':'で', 'と':'ど', 'は':'ば', 'ひ':'び', 'ふ':'ぶ', 'へ':'べ', 'ほ':'ぼ'
+    },
+    handakuonMap: { 'は':'ぱ', 'ひ':'ぴ', 'ふ':'ぷ', 'へ':'ぺ', 'ほ':'ぽ' },
+    sokuon: [['っ']],
+    yoon: [
+        ['きゃ','きゅ','きょ'], ['しゃ','しゅ','しょ'], ['ちゃ','ちゅ','ちょ'],
+        ['にゃ','にゅ','にょ'], ['ひゃ','ひゅ','ひょ'], ['みゃ','みゅ','みょ'], ['りゃ','りゅ','りょ']
+    ],
+    yoonDakuon: [
+        ['ぎゃ','ぎゅ','ぎょ'], ['じゃ','じゅ','じょ'], ['ぢゃ','ぢゅ','ぢょ'],
+        ['びゃ','びゅ','びょ'], ['ぴゃ','ぴゅ','ぴょ']
+    ]
+};
+
+// --- クイズデータ ---
+const quizzes = {
+    nitaku: {
+        dakuon: [
+            { emoji: "🗝️", q: "ただしいのは どっち？", opts: ["かき", "かぎ"], ans: 1 },
+            { emoji: "🐵", q: "ただしいのは どっち？", opts: ["さる", "ざる"], ans: 0 },
+            { emoji: "🧺", q: "ただしいのは どっち？", opts: ["さる", "ざる"], ans: 1 },
+            { emoji: "🪟", q: "ただしいのは どっち？", opts: ["まと", "まど"], ans: 1 },
+            { emoji: "🎯", q: "ただしいのは どっち？", opts: ["まと", "まど"], ans: 0 },
+            { emoji: "🐍", q: "ただしいのは どっち？", opts: ["へひ", "へび"], ans: 1 }
+        ],
+        handakuon: [
+            { emoji: "🎵", q: "ただしいのは どっち？", opts: ["おんぶ", "おんぷ"], ans: 1 },
+            { emoji: "✏️", q: "ただしいのは どっち？", opts: ["えんひつ", "えんぴつ"], ans: 1 },
+            { emoji: "🍞", q: "ただしいのは どっち？", opts: ["はん", "ぱん"], ans: 1 }
+        ],
+        sokuon: [
+            { emoji: "🐱", q: "ただしいのは どっち？", opts: ["ねこ", "ねっこ"], ans: 0 },
+            { emoji: "🌱", q: "ただしいのは どっち？", opts: ["ねこ", "ねっこ"], ans: 1 },
+            { emoji: "🦊", q: "ただしいのは どっち？", opts: ["きつね", "きって"], ans: 0 },
+            { emoji: "📮", q: "ただしいのは どっち？", opts: ["きつね", "きって"], ans: 1 },
+            { emoji: "📓", q: "ただしいのは どっち？", opts: ["にき", "にっき"], ans: 1 },
+            { emoji: "🎵", q: "ただしいのは どっち？", opts: ["もきん", "もっきん"], ans: 1 },
+            { emoji: "🦗", q: "ただしいのは どっち？", opts: ["はった", "ばった"], ans: 1 }
+        ],
+        choon: [
+            { emoji: "👩", q: "ただしいのは どっち？", opts: ["おかあさん", "おこうさん"], ans: 0 },
+            { emoji: "👵", q: "ただしいのは どっち？", opts: ["おばあさん", "おばわさん"], ans: 0 },
+            { emoji: "👦", q: "ただしいのは どっち？", opts: ["おにいさん", "おにえさん"], ans: 0 },
+            { emoji: "👴", q: "ただしいのは どっち？", opts: ["おじいさん", "おじえさん"], ans: 0 },
+            { emoji: "👱‍♀️", q: "ただしいのは どっち？", opts: ["おねえさん", "おねいさん"], ans: 0 },
+            { emoji: "👨", q: "ただしいのは どっち？", opts: ["おとうさん", "おとおさん"], ans: 0 },
+            { emoji: "👧", q: "ただしいのは どっち？", opts: ["いもうと", "いもおと"], ans: 0 },
+            { emoji: "👦", q: "ただしいのは どっち？", opts: ["おとうと", "おとおと"], ans: 0 },
+            { emoji: "🔢", q: "ただしいのは どっち？", opts: ["すうじ", "すじ"], ans: 0 },
+            { emoji: "🌇", q: "ただしいのは どっち？", opts: ["ゆうやけ", "ゆやけ"], ans: 0 },
+            { emoji: "🕯️", q: "ただしいのは どっち？", opts: ["ろうそく", "ろおそく"], ans: 0 },
+            { emoji: "🪄", q: "ただしいのは どっち？", opts: ["まほう", "まほお"], ans: 0 },
+            { emoji: "⛲", q: "ただしいのは どっち？", opts: ["こうえん", "こおえん"], ans: 0 }
+        ],
+        yoon: [
+            { emoji: "🧸", q: "ただしいのは どっち？", opts: ["おもちゃ", "おもちや"], ans: 0 },
+            { emoji: "👤", q: "ただしいのは どっち？", opts: ["おきゃく", "おきやく"], ans: 0 },
+            { emoji: "🚶‍♂️", q: "ただしいのは どっち？", opts: ["ぎょうれつ", "ぎようれつ"], ans: 0 },
+            { emoji: "🏪", q: "ただしいのは どっち？", opts: ["しょうてんがい", "しようてんがい"], ans: 0 },
+            { emoji: "💯", q: "ただしいのは どっち？", opts: ["いっぱい", "いつぱい"], ans: 0 },
+            { emoji: "🚲", q: "ただしいのは どっち？", opts: ["じてんしゃ", "じてんしや"], ans: 0 },
+            { emoji: "🤝", q: "ただしいのは どっち？", opts: ["あくしゅ", "あくしゆ"], ans: 0 },
+            { emoji: "📚", q: "ただしいのは どっち？", opts: ["としょかん", "としよかん"], ans: 0 },
+            { emoji: "✊", q: "ただしいのは どっち？", opts: ["じゃんけん", "じやんけん"], ans: 0 },
+            { emoji: "🥛", q: "ただしいのは どっち？", opts: ["ぎゅうにゅう", "ぎゆうにゆう"], ans: 0 },
+            { emoji: "🍽️", q: "ただしいのは どっち？", opts: ["しょっき", "しよつき"], ans: 0 },
+            { emoji: "🍱", q: "ただしいのは どっち？", opts: ["きゅうしょく", "きゆうしよく"], ans: 0 },
+            { emoji: "🍵", q: "ただしいのは どっち？", opts: ["おちゃ", "おちや"], ans: 0 }
+        ]
+    },
+    anaaki: {
+        dakuon: [
+            { q: "へやの そとを みるよ。\nま［？］", opts: ["と", "ど"], ans: 1 },
+            { q: "きに のぼる どうぶつ。\n［？］る", opts: ["さ", "ざ"], ans: 0 },
+            { q: "ドアを あけるよ。\nか［？］", opts: ["き", "ぎ"], ans: 1 },
+            { q: "にょろにょろ どうぶつ。\nへ［？］", opts: ["ひ", "び"], ans: 1 }
+        ],
+        handakuon: [
+            { q: "がっきを えんそうするよ。\nおん［？］", opts: ["ぶ", "ぷ"], ans: 1 },
+            { q: "じを かくよ。\nえん［？］つ", opts: ["ひ", "ぴ"], ans: 1 }
+        ],
+        sokuon: [
+            { q: "てがみに はるよ。\nき［？］て", opts: ["つ", "っ"], ans: 1 },
+            { q: "ニャー と なくよ。\nね［？］", opts: ["こ", "っこ"], ans: 0 },
+            { q: "きの したに あるよ。\nね［？］", opts: ["こ", "っこ"], ans: 1 }
+        ],
+        choon: [
+            { q: "やさしい おか［？］さん", opts: ["あ", "お"], ans: 0 },
+            { q: "かっこいい おに［？］さん", opts: ["え", "い"], ans: 1 }
+        ],
+        yoon: [
+            { q: "あそぶと たのしいね。\nおも［？］", opts: ["ちゃ", "ちや"], ans: 0 },
+            { q: "のりもの だよ。\nじてん［？］", opts: ["しゃ", "しや"], ans: 0 }
+        ]
+    }
+};
+
+// --- 状態管理 ---
+let isKatakana = false;
+let soundEnabled = true;
+let currentTableType = 'gojuon';
+let currentQuizCategory = 'dakuon';
+let currentQuizIndex = 0;
+let quizMode = 'nitaku'; 
+let isAnimating = false;
+let currentQuizList = [];
+
+// --- 音声関連 ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioContext();
+
+function playSound(type) {
+    if (!soundEnabled) return;
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+    if (type === 'correct') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(1108.73, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+    } else if (type === 'wrong') {
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+    }
+}
+
+function speakText(text) {
+    if (!soundEnabled) return;
+    let cleanText = text.replace(/[［］（）？\n]/g, ' ');
+    const ut = new SpeechSynthesisUtterance(cleanText);
+    ut.lang = 'ja-JP'; ut.rate = 0.85; speechSynthesis.speak(ut);
+}
+
+function toKata(str) {
+    if (!isKatakana) return str;
+    return str.replace(/[\u3041-\u3096]/g, match => String.fromCharCode(match.charCodeAt(0) + 0x60));
+}
+
+// --- UI制御 ---
+function toggleKana() {
+    isKatakana = !isKatakana;
+    document.getElementById('kana-toggle').innerText = isKatakana ? "ひらがなにする" : "カタカナにする";
+    if (!document.getElementById('area-table').classList.contains('hidden')) {
+        renderTable(currentTableType, document.querySelector('.table-nav button.active'));
+    } else {
+        renderQuiz();
+    }
+}
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    document.getElementById('sound-toggle').innerText = soundEnabled ? "音：オン 🔊" : "音：オフ 🔇";
+}
+
+function switchTab(tab) {
+    document.getElementById('area-table').classList.add('hidden'); document.getElementById('area-quiz').classList.add('hidden');
+    document.getElementById('tab-table').classList.remove('active'); document.getElementById('tab-quiz').classList.remove('active');
+    document.getElementById('area-' + tab).classList.remove('hidden'); document.getElementById('tab-' + tab).classList.add('active');
+    if(tab === 'quiz') startQuiz(currentQuizCategory, document.querySelector('.quiz-nav button.active') || document.querySelector('.quiz-nav button'));
+}
+
+function switchQuizMode(mode) {
+    quizMode = mode;
+    document.getElementById('mode-nitaku').classList.remove('active');
+    document.getElementById('mode-anaaki').classList.remove('active');
+    document.getElementById('mode-' + mode).classList.add('active');
+    startQuiz(currentQuizCategory, document.querySelector('.quiz-nav button.active'));
+}
+
+// --- 表の描画（縦書き） ---
+function renderTable(type, btnObj) {
+    currentTableType = type;
+    document.querySelectorAll('.table-nav button').forEach(b => b.classList.remove('active'));
+    if(btnObj) btnObj.classList.add('active');
+    
+    const container = document.getElementById('table-container');
+    container.innerHTML = '';
+    
+    let targetData = [];
+    if (type === 'gojuon' || type === 'dakuon' || type === 'handakuon') { targetData = data.gojuon; }
+    else if (type === 'yoon') { targetData = data.yoon; }
+    else if (type === 'yoonDakuon') { targetData = data.yoonDakuon; }
+    else if (type === 'sokuon') { targetData = data.sokuon; }
+
+    // 拗音かどうかを判定
+    let isYoon = (type === 'yoon' || type === 'yoonDakuon');
+
+    targetData.forEach(rowData => {
+        const colDiv = document.createElement('div');
+        colDiv.className = 'col';
+        rowData.forEach(char => {
+            let displayChar = char;
+            let cellClass = 'normal';
+            
+            if (type === 'dakuon') {
+                cellClass = 'dim';
+                if (data.dakuonMap[char]) { displayChar = data.dakuonMap[char]; cellClass = 'highlight'; }
+            } else if (type === 'handakuon') {
+                cellClass = 'dim';
+                if (data.handakuonMap[char]) { displayChar = data.handakuonMap[char]; cellClass = 'highlight'; }
+            }
+            colDiv.appendChild(createCell(displayChar, cellClass, isYoon));
+        });
+        container.appendChild(colDiv);
+    });
+}
+
+function createCell(char, className, isYoon) {
+    const div = document.createElement('div');
+    if (!char) { div.className = 'cell empty'; return div; }
+    
+    // 拗音の場合は専用のクラスを付与
+    div.className = `cell ${className} ${isYoon ? 'yoon-cell' : ''}`;
+    div.innerText = toKata(char);
+    div.onclick = () => speakText(char);
+    return div;
+}
+
+// --- クイズ機能 ---
+function startQuiz(category, btnObj) {
+    currentQuizCategory = category;
+    document.querySelectorAll('.quiz-nav button').forEach(b => b.classList.remove('active'));
+    if(btnObj) btnObj.classList.add('active');
+    
+    currentQuizList = [...quizzes[quizMode][category]].sort(() => Math.random() - 0.5);
+    currentQuizIndex = 0;
+    renderQuiz();
+}
+
+function renderQuiz() {
+    if (isAnimating || currentQuizList.length === 0) return;
+    const qData = currentQuizList[currentQuizIndex];
+    
+    const emojiDisplay = document.getElementById('emoji-display');
+    if (quizMode === 'nitaku' && qData.emoji) {
+        emojiDisplay.style.display = 'block';
+        emojiDisplay.innerText = qData.emoji;
+    } else {
+        emojiDisplay.style.display = 'none';
+    }
+
+    document.getElementById('question-text').innerText = toKata(qData.q);
+    
+    const optsContainer = document.getElementById('options-container');
+    optsContainer.innerHTML = '';
+    qData.opts.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerText = toKata(opt);
+        btn.onclick = () => checkAnswer(index, qData.ans);
+        optsContainer.appendChild(btn);
+    });
+}
+
+function checkAnswer(selectedIndex, correctIndex) {
+    if (isAnimating) return;
+    isAnimating = true;
+    const isCorrect = selectedIndex === correctIndex;
+    const mark = document.getElementById(isCorrect ? 'hanamaru' : 'batsu');
+    playSound(isCorrect ? 'correct' : 'wrong');
+    mark.classList.add('show');
+    
+    setTimeout(() => {
+        mark.classList.remove('show');
+        isAnimating = false;
+        if (isCorrect) {
+            currentQuizIndex = (currentQuizIndex + 1) % currentQuizList.length;
+            if(currentQuizIndex === 0) currentQuizList.sort(() => Math.random() - 0.5);
+            renderQuiz();
+        }
+    }, 1200);
+}
+
+// 初期化
+window.onload = () => {
+    renderTable('gojuon', document.querySelector('.table-nav button.active'));
+    document.body.addEventListener('click', () => {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+    }, { once: true });
+};
+</script>
+</body>
+</html>
